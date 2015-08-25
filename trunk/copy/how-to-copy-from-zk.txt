@@ -1,0 +1,27 @@
+Files in this directory are merged from ZK.
+It takes two merge steps since they are in different repository.
+
+Step 1:
+Execute build
+
+	build
+		#it assumes ~/prj/zk50/zklighter/lib
+
+	or
+
+	build foo/zklighter/lib
+
+Step 2:
+Use svn merge to merge lib-copy to lib.
+It is OK to modify files in lib.
+
+from
+	https://zkuery.googlecode.com/svn/trunk/copy/lib-copy/css/zk.css
+to
+	../lib/css/zk.css
+
+Step 3:
+Build again
+
+	build
+		#it assumes ~/prj/zk50/zklighter/lib

@@ -1,0 +1,242 @@
+#labels Python,GoogleAppEngine
+<wiki:toc max_depth="2" />
+
+= Introduction =
+
+Let's illustrate the communication between the client and the server with a small application called Book Suggest.
+
+Book Suggest shows up a combobox to let user select an interested category. 
+
+http://docs.zkoss.org/images/1/1b/Booksuggest-1.jpg
+
+After user selects a category, it displays a list of suggested books in a grid. 
+
+http://docs.zkoss.org/images/6/6c/Booksuggest-2.jpg
+
+= Creating a Python project =
+
+The setup of a Python project depends on the Web server. Here we use Google App Engine as the target Web server. However, it is easy to port to other Web server since there are only a few lines of codes depends on the Web server.
+
+To create a ZKuery project, you have to prepare the following(1):
+
+ * ZK JavaScript files. Let us copy them to the `WebContent/js` directory of the project
+ * ZK CSS and image files. Let us copy them to the `WebContent/cssdirectory` of the project
+ * (Optinal) Simple JSON. It is required if you want to use JSON to communicate. You can choose other implementation instead, too. 
+
+To focus more on ZKuery itself, here we simply open an existent project called `booksuggest` that can be found in the download. And copy two directories named `booksuggest` and `simplejson` to the directory where Google App Engine was installed.
+
+----
+1. ↑ Here we assume Google App Engine was installed. Refer to here for more information.
+
+= Creating a HTML page =
+
+In this example, we use [iZUML] to implement the HTML page. If you prefer other approach, refer to the example with JavaScript.
+
+Let us create a file named `index.html` with the following content, and place it under the WebContent directory(1).
+
+{{{
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Book Suggest</title>
+<link rel="stylesheet" type="text/css" href="/css/zk.css"/>
+<script type="text/javascript" src="/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/js/src/zuml.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/js/lang.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+		<!--
+		<window id="main" title="Book Suggest" border="normal">
+			What is your favorite?
+			<combobox id="favorite" readonly="true" cols="30"
+			onSelect="loadSuggest(event.data.items[0])">
+				<comboitem id="bm" label="Biographies and Memoirs"/>
+				<comboitem id="ci" label="Computer and Internet"/>
+				<comboitem id="lf" label="Literature and Fiction"/>
+			</combobox>
+			<separator bar="true"/>
+		</window>
+		-->
+	</div>
+	<script>
+		var main = zk.zuml.Parser.createAt('#main');
+
+		//load the suggestion
+		function loadSuggest(item) {
+			jq.ajax({
+				type: 'POST',
+				url: '/suggest',
+				dataType: 'json',
+				data: 'categoryId=' + item.id,
+				success: function (bookInfo) {
+					var suggestInfo = zk.Widget.$('suggestInfo');
+					if (suggestInfo) suggestInfo.detach();
+					main.appendChild(zk.zuml.Parser.createAt('#suggestInfo',
+						{replaceHTML:false}, {infos: bookInfo}));
+				}
+			});
+		}
+	</script>
+	<div id="suggestInfo" style="display:none">
+		<!--
+		<grid id="suggestInfo">
+			<columns>
+				<column label="Title"/>
+				<column label="Author"/>
+				<column label="Author"/>
+			</columns>
+			<rows>
+				<row forEach="${_.infos}">
+					<label value="${each.title}"/>
+					<label value="${each.author1}"/>
+					<label value="${each.author2}"/>
+				</row>
+			</rows>
+		</grid> 
+		 -->
+	</div>
+</body>
+</html>
+}}}
+
+Then, we have to fire the request to the server when user selects a category. To listen the event, just specify `onSelect` as follows.
+
+{{{
+<combobox onSelect="loadSuggest(event.data.items[0])">
+}}}
+
+where `loadSuggest` is the function we are going to implement later to load the book suggestion from the server.
+
+As shown above, when an event is received, we can retrieve the event by use of a variable named event, which is an instance of [http://www.zkoss.org/javadoc/latest/jsdoc/zk/Event.html zk.Event]. Moreover, we can retrieve the detailed information via the data property. Because it is `onSelect`, we can retrieve the selected item via `data.items[0]` (there is only one selected item since it is a combobox).(2)
+
+Then, we implement `loadSuggest` by use of the ajax function of [http://www.zkoss.org/javadoc/latest/jsdoc/_global_/jq.html jQuery] to send the request to the server as follows.
+
+{{{
+function loadSuggest(item) {
+	jq.ajax({
+		type: 'POST',
+		url: '/suggest',
+		dataType: 'json',
+		data: 'categoryId=' + item.id,
+		success: function (bookInfo) {
+			... //the function to handle the response sent back from the server
+		}
+	});
+}
+}}}
+
+where `jq` references to the [http://www.zkoss.org/javadoc/latest/jsdoc/_global_/jq.html jQuery] object. The URL specified in url depends on how we map the python program to handle the request. Here, we map it to `/suggest`.
+
+----
+1. ↑ The directory to put index.html depends on the configuration. Refer to [#Creating app.yaml].
+2. ↑ Refer to [http://docs.zkoss.org/wiki/CDG5:_Event_Data Event Data] for details.
+
+= Processing the response sent from the server =
+
+When using jQuery's `ajax()`, we can specify a function to process the content responsed from the server. It can be done by specifying a function with the success attribute as show in the above example. In this example, we will show a list of suggested books based on the category selected by user, so we implement it as follows.
+
+{{{
+success: function (bookInfo) {
+	var suggestInfo = zk.Widget.$('suggestInfo');
+	if (suggestInfo) suggestInfo.detach();
+	main.appendChild(zk.zuml.Parser.createAt('#suggestInfo',
+		{replaceHTML:false}, {infos: bookInfo}));
+}
+}}}
+
+where we use the ```createAt``` method of [http://www.zkoss.org/javadoc/latest/jsdoc/zk/zuml/Parser.html Parser] to load a template stored in a hidden DIV (whose id is `suggestInfo`). Because we want to keep the template for later use, we have to specify `replaceHTML` as false. Furthermore, we append the created widget to the widget named main.
+
+= Creating app.yaml =
+
+Google App Engine uses `app.yaml` to specify runtime configuration, including versions and URLs. Let us create `app.yaml` with the following content.
+
+{{{
+application: booksuggest
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /(.*\.(html|png|jpg|gif|css|js))
+  static_files: WebContent/\1
+  upload: WebContent/(.*\.(html|png|jpg|gif|css|js))
+
+- url: /suggest
+  script: booksuggest.py
+}}}
+
+= Creating suggest.py to handle the request =
+
+To handle the request sent from the client, we have to implement a handle. Let us create `suggest.py` with the following content. 
+
+{{{
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp.util import run_wsgi_app
+import simplejson as json
+
+class Suggest(webapp.RequestHandler):
+	_bookInfos = {
+		"bm": [ #Biographies and Memoirs
+			{"title": "The Last Lecture", "author1": "Randy Pausch", "author2": "Jeffrey Zaslow"},
+			{"title": "Always Looking Up: The Adventures of an Incurable Optimist ", "author1": "Michael F. Fox", "author2": ""}
+		],
+		"ci": [ #Computer and Internet
+			{"title": "ZK: Ajax without the Javascript Framework", "author1": "HenriChen", "author2": "Robbie Cheng"},
+			{"title": "Beautiful Teams: Inspiring and Cautionary Tales", "author1": "Andrew Stellman", "author2": "Jennifer Greene"}
+		],
+		"lf": [ #lf: Literature and Fiction
+			{"title": "The Shack", "author1": "William P. Young", "author2": ""},
+			{"title": "Watchmen", "author1": "Alan Moore", "author2": "Dave Gibbons"},
+			{"title": "Long Lost", "author1": "Harlan Coben", "author2": ""}
+		]
+	}
+
+	def post(self):
+		self.response.headers['Content-Type'] = 'text/plain;charset=UTF-8'
+		self.response.out.write(json.dumps(self._bookInfos[self.request.get('categoryId')]))
+
+	def get(self):
+		self.post()
+
+application = webapp.WSGIApplication(
+	[('/suggest', Suggest)], debug=True)
+
+def main():
+	run_wsgi_app(application)
+
+if __name__ == "__main__":
+	main()
+}}}
+
+== Processing the request with AuRequest ==
+=== Processing the request ===
+
+The processing of the request is straightforward: retrieve the category, look for the suggestion, and then send it back. In this example, we use JSON to transfer the data back(1).
+
+{{{
+self.response.out.write(json.dumps(self._bookInfos[self.request.get('categoryId')]))
+}}}
+
+Once the response arrives at the client, the success function will be called to display the suggestion, as described in the previous section.
+
+----
+1. ↑ You can use any format you like as long as both the client and the server can interpret it correctly
+
+
+= Testing the application =
+
+To test the application, you have to start Google App Engine with the following instruction.
+
+{{{
+python dev_appserver.py booksuggest
+}}}
+
+Then, open a browser to access the following URL (where the port depends on your Web server's configuration).
+
+{{{
+http://localhost:8080/index.html
+}}}

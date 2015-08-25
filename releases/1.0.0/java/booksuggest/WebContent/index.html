@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Book Suggest</title>
+<link rel="stylesheet" type="text/css" href="/booksuggest/css/zk.css"/>
+<script type="text/javascript" src="/booksuggest/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/booksuggest/js/src/zuml.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/booksuggest/js/lang.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+		<!--
+		<window id="main" title="Book Suggest" border="normal">
+			What is your favorite?
+			<combobox id="favorite" readonly="true" cols="30"
+			onSelect="loadSuggest(event.data.items[0])">
+				<comboitem id="bm" label="Biographies and Memoirs"/>
+				<comboitem id="ci" label="Computer and Internet"/>
+				<comboitem id="lf" label="Literature and Fiction"/>
+			</combobox>
+			<separator bar="true"/>
+		</window>
+		-->
+	</div>
+	<script>
+		var main = zk.zuml.Parser.createAt('#main');
+
+		//load the suggestion
+		function loadSuggest(item) {
+			jq.ajax({
+				type: 'POST',
+				url: '/booksuggest/suggest',
+				dataType: 'json',
+				data: 'categoryId=' + item.id,
+				success: function (bookInfo) {
+					var suggestInfo = zk.Widget.$('suggestInfo');
+					if (suggestInfo) suggestInfo.detach();
+					main.appendChild(zk.zuml.Parser.createAt('#suggestInfo',
+						{replaceHTML:false}, {infos: bookInfo}));
+				}
+			});
+		}
+	</script>
+	<div id="suggestInfo" style="display:none">
+		<!--
+		<grid id="suggestInfo">
+			<columns>
+				<column label="Title"/>
+				<column label="Author"/>
+				<column label="Author"/>
+			</columns>
+			<rows>
+				<row forEach="${_.infos}">
+					<label value="${each.title}"/>
+					<label value="${each.author1}"/>
+					<label value="${each.author2}"/>
+				</row>
+			</rows>
+		</grid> 
+		 -->
+	</div>
+</body>
+</html>

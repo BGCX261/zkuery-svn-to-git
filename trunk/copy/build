@@ -1,0 +1,161 @@
+#!/bin/bash
+# build-lib
+#
+#	Purpose:
+#		Copy ~/prj/zk50/zklighter/lib to lib-copy
+#	Description:
+#		
+#	History:
+#		Thu Mar 12 15:47:24     2009, Created by tomyeh
+#
+#Copyright (C) 2009 Potix Corporation. All Rights Reserved.
+#
+if [ "$1" == '-h' ] || [ "$1" == "help" ] ; then
+	echo "Usage"
+	echo "	build [clear] [source-dir]"
+	echo
+	echo "Exampe:"
+	echo "	build ~/prj/zk/zklighter/lib"
+	echo
+	echo "If source-dir is omitted, ~/prj/zk50/zklighter/lib is assumed"
+	exit 0
+fi
+
+opt=$1
+
+function replaceCSS {
+	local dst=$1
+	if [ -d $dst ] ; then
+		rm -f $dst/*.css
+	else
+		echo mkdir $dst
+		mkdir $dst
+	fi
+
+	for f in *; do
+		if [ "$f" != ".svn" ] && [ "$f" != "zkrc" ] && [ "$f" != "js" ] ; then
+			if [ -d "$f" ] ; then
+				(
+					#echo copy $(pwd)/$f
+					cd "$f"
+					replaceCSS "$dst/$f"
+				)
+			else
+				ext=${f#*.}
+				if [ "$ext" = "css" ] ; then
+					cp -p "$f" "$dst"
+				fi
+			fi
+		fi
+	done
+}
+function replaceNonCSS {
+	local dst=$1
+	if [ -d $dst ] ; then
+		rm -f $dst/*.gif $dst/*.png $dst/*.xml
+	else
+		echo mkdir $dst
+		mkdir $dst
+	fi
+
+	for f in *; do
+		if [ "$f" != ".svn" ] ; then
+			if [ -d "$f" ] ; then
+				(
+					#echo copy $(pwd)/$f
+					cd "$f"
+					replaceNonCSS "$dst/$f"
+				)
+			else
+				ext=${f#*.}
+				if [ "$ext" != "css" ] ; then
+					cp -p "$f" "$dst"
+				fi
+			fi
+		fi
+	done
+}
+
+dstdir=$0
+dstdir=${dstdir%/*}
+if [ "$dstdir" = "." ] ; then
+	dstdir=$(pwd)
+fi
+if [ "${dstdir#/}" = "$dstdir" ] ; then
+	dstdir=$(pwd)/$dstdir
+fi
+if [ "$TERM" = "cygwin" ] ; then
+	dstdir=$(cygpath -u $dstdir)
+fi
+
+if [ "$1" = "clear" ] ; then
+	srcdir=$2
+else
+	srcdir=$1
+fi
+if [ "$srcdir" = "" ] ; then
+	srcdir=$HOME/prj/zk50/zklighter/lib
+fi
+if [ ! -d $srcdir ] ; then
+	echo $srcdir not found
+	exit 1
+fi
+if [ ! -f "$srcdir/js/zk-all.js" ] ; then
+	echo "$srcdir not correct (e.g., ~/prj/zk50/zklighter/lib)"
+	exit 1
+fi
+echo Copy from $srcdir to $dstdir
+
+cd $srcdir
+echo handle $dstdir/lib-copy
+replaceCSS $dstdir/lib-copy
+
+dstdir=${dstdir%/*}
+echo handle $dstdir/lib
+replaceNonCSS $dstdir/lib
+
+function updateApp {
+	local dst=$1
+
+	#remove non-existent
+	if [ -d $dst ] && [ "$opt" == "clear" ] ; then
+		for f in $dst/*; do
+			if [ "$f" != ".svn" ] && [ ! -d "$f" ] 	&& [ "${f%zuml.js}" == "$f" ] ; then
+				#echo rm $f
+				rm $f
+			fi
+		done
+	else
+		mkdir -p $dst
+	fi
+
+	#copy
+	for f in *; do
+		if [ "$f" != ".svn" ] ; then
+			if [ -d "$f" ] ; then
+				(
+					#echo copy $(pwd)/$f
+					cd "$f"
+					updateApp "$dst/$f"
+				)
+			else
+				cp -p "$f" "$dst"
+			fi
+		fi
+	done
+}
+echo Update sample applications
+cd $dstdir/lib/js
+echo Update java/js
+updateApp $dstdir/java/booksuggest/WebContent/js
+echo Update python/js
+updateApp $dstdir/python/google_appengine/booksuggest/WebContent/js
+echo Update php/js
+updateApp $dstdir/php/booksuggest/js
+cd $dstdir/lib/css
+echo Update java/css
+updateApp $dstdir/java/booksuggest/WebContent/css
+echo Update python/css
+updateApp $dstdir/python/google_appengine/booksuggest/WebContent/css
+echo Update php/css
+updateApp $dstdir/php/booksuggest/css

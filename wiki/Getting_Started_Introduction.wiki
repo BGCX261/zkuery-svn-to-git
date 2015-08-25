@@ -1,0 +1,5 @@
+Creating a RIA application with ZKuery is straight-forward.
+
+ # Create the HTML page(s), specifying the required CSS and JavaScript files
+ # Listen to events and manipulate ZK wigets
+ # Communicate with the server with [http://www.json.org/ JSON]

@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>ZKuery</title>
+<link rel="stylesheet" type="text/css" href="../lib/css/zk.css"/>
+<script type="text/javascript" src="../lib/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/lang.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+	</div>
+	<script>
+	jq('#main').replaceWith(new zul.wnd.Window({
+		title: 'ZKuery',
+		border: 'normal',
+		width: "500px",
+		children: [
+			new zul.wgt.Label({value: 'Hello, ZKuery'}),
+			new zul.wgt.Separator({bar: true}),
+			new zul.wgt.Button({
+				label: 'Overlapped',
+				onClick: function () {this.parent.doOverlapped();}
+			}),
+			new zul.wgt.Button({
+				label: 'Modal',
+				onClick: function () {this.parent.doModal();}
+			}),
+			new zul.wgt.Button({
+				label: 'Embedded',
+				onClick: function () {this.parent.doEmbedded();}
+			}),
+			new zul.wgt.Button({
+				label: 'Popup',
+				onClick: function () {this.parent.doPopup();}
+			})
+		]}));
+	</script>
+</body>
+</html>

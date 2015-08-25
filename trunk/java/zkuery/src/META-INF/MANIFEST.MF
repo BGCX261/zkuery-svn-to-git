@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Specification-Title: ZKuery
+Specification-Version: 1.0.0
+Specification-Vendor: Potix Corporation
+Implementation-Title: org.zkuery
+Implementation-URL: http://www.zkuery.org/
+Implementation-Version: 1.0.0
+Implementation-Vendor: Potix Corporation

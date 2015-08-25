@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>ZKuery</title>
+<link rel="stylesheet" type="text/css" href="../lib/css/zk.css"/>
+<script type="text/javascript" src="../lib/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/lang.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/src/zuml.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+		<!--
+		<window title="ZKuery Test" border="normal">
+			${this.getTitle()}
+			<zk forEach="${[1, 2, 3]}">
+				${each}: <textbox value="${each}"/>
+			</zk>
+			<button label="Click">
+				<attribute name="onClick">
+			this.parent.appendChild(
+				new zul.wgt.Label({value: 'Click\n', multiline: true}));
+				</attribute>
+			</button>
+			<separator bar="true"/>
+		</window>
+		-->
+	</div>
+	<script>
+		zk.zuml.Parser.createAt('#main');
+	</script>
+</body>
+</html>

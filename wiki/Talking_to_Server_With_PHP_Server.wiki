@@ -1,0 +1,194 @@
+<wiki:toc max_depth="2" />
+
+= Introduction =
+
+Let's illustrate the communication between the client and the server with a small application called Book Suggest.
+
+Book Suggest shows up a combobox to let user select an interested category. 
+
+http://docs.zkoss.org/images/1/1b/Booksuggest-1.jpg
+
+After user selects a category, it displays a list of suggested books in a grid. 
+
+http://docs.zkoss.org/images/6/6c/Booksuggest-2.jpg
+
+= Environment Setup =
+
+To use ZKuery with PHP, you have to prepare the following:
+
+ * ZK JavaScript files. Let us copy them to the `booksuggest/js` directory of the Web server
+ * ZK CSS and image files. Let us copy them to the `booksuggest/css` directory of the Web server 
+
+To focus more on ZKuery itself, you can simply copy the directory named `php/booksuggest` that can be found in the download to the Web server.
+
+= Creating a HTML page =
+
+In this example, we use [iZUML] to implement the HTML page. If you prefer other approach, refer to the example with JavaScript.
+
+Let us create a file named `index.html` with the following content, and place it under the `WebContent` directory. 
+
+
+{{{
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Book Suggest</title>
+<link rel="stylesheet" type="text/css" href="/booksuggest/css/zk.css"/>
+<script type="text/javascript" src="/booksuggest/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/booksuggest/js/src/zuml.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/booksuggest/js/lang.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+		<!--
+		<window id="main" title="Book Suggest" border="normal">
+			What is your favorite?
+			<combobox id="favorite" readonly="true" cols="30"
+			onSelect="loadSuggest(event.data.items[0])">
+				<comboitem id="bm" label="Biographies and Memoirs"/>
+				<comboitem id="ci" label="Computer and Internet"/>
+				<comboitem id="lf" label="Literature and Fiction"/>
+			</combobox>
+			<separator bar="true"/>
+		</window>
+		-->
+	</div>
+	<script>
+		var main = zk.zuml.Parser.createAt('#main');
+
+		//load the suggestion
+		function loadSuggest(item) {
+			jq.ajax({
+				type: 'POST',
+				url: '/booksuggest/suggest.php',
+				dataType: 'json',
+				data: 'categoryId=' + item.id,
+				success: function (bookInfo) {
+					var suggestInfo = zk.Widget.$('suggestInfo');
+					if (suggestInfo) suggestInfo.detach();
+					main.appendChild(zk.zuml.Parser.createAt('#suggestInfo',
+						{replaceHTML:false}, {infos: bookInfo}));
+				}
+			});
+		}
+	</script>
+	<div id="suggestInfo" style="display:none">
+		<!--
+		<grid id="suggestInfo">
+			<columns>
+				<column label="Title"/>
+				<column label="Author"/>
+				<column label="Author"/>
+			</columns>
+			<rows>
+				<row forEach="${_.infos}">
+					<label value="${each.title}"/>
+					<label value="${each.author1}"/>
+					<label value="${each.author2}"/>
+				</row>
+			</rows>
+		</grid> 
+		 -->
+	</div>
+</body>
+</html>
+}}}
+
+== Sending the request to the server ==
+
+Then, we have to fire the request to the server when user selects a category. To listen the event, just specify `onSelect` as follows.
+
+{{{
+<combobox onSelect="loadSuggest(event.data.items[0])">
+}}}
+
+where `loadSuggest` is the function we are going to implement later to load the book suggestion from the server.
+
+As shown above, when an event is received, we can retrieve the event by use of a variable named event, which is an instance of [http://www.zkoss.org/javadoc/latest/jsdoc/zk/Event.html zk.Event]. Moreover, we can retrieve the detailed information via the data property. Because it is `onSelect`, we can retrieve the selected item via `data.items[0]` (there is only one selected item since it is a combobox).(1)
+
+Then, we implement `loadSuggest` by use of the ajax function of [http://www.zkoss.org/javadoc/latest/jsdoc/_global_/jq.html jQuery] to send the request to the server as follows.
+
+{{{
+function loadSuggest(item) {
+	jq.ajax({
+		type: 'POST',
+		url: '/booksuggest/suggest.php',
+		dataType: 'json',
+		data: 'categoryId=' + item.id,
+		success: function (bookInfo) {
+			... //the function to handle the response sent back from the server
+		}
+	});
+}
+}}}
+
+where `jq` references to the [http://www.zkoss.org/javadoc/latest/jsdoc/_global_/jq.html jQuery] object. The URL specified in `url` depends on what PHP program to handle the request. Here, we map it to `suggest.php` (and we assume the context path is `/booksuggest`).
+
+----
+1. ↑ Refer to [http://docs.zkoss.org/wiki/CDG5:_Event_Data Event Data] for details.
+
+= Processing the response sent from the server =
+
+When using jQuery's `ajax()`, we can specify a function to process the content responsed from the server. It can be done by specifying a function with the success attribute as show in the above example. In this example, we will show a list of suggested books based on the category selected by user, so we implement it as follows.
+
+{{{
+success: function (bookInfo) {
+	var suggestInfo = zk.Widget.$('suggestInfo');
+	if (suggestInfo) suggestInfo.detach();
+	main.appendChild(zk.zuml.Parser.createAt('#suggestInfo',
+		{replaceHTML:false}, {infos: bookInfo}));
+}
+}}}
+
+where we use the `createAt` method of [http://www.zkoss.org/javadoc/latest/jsdoc/zk/zuml/Parser.html Parser] to load a template stored in a hidden DIV (whose id is `suggestInfo`). Because we want to keep the template for later use, we have to specify `replaceHTML` as false. Furthermore, we append the created widget to the widget named `main`.
+
+= Creating a PHP file =
+
+To handle the request sent from the client, we have to implement a PHP program. Let us create a PHP file named `suggest.php` in the same directory with the following content.
+
+{{{
+<?php
+	$bookInfos = array(
+		"bm"=> array( //Biographies and Memoirs
+			array("title"=> "The Last Lecture", "author1"=> "Randy Pausch", "author2"=> "Jeffrey Zaslow"),
+			array("title"=> "Always Looking Up: The Adventures of an Incurable Optimist ", "author1"=> "Michael F. Fox", "author2"=> "")
+		),
+		"ci"=> array( //Computer and Internet
+			array("title"=> "ZK: Ajax without the Javascript Framework", "author1"=> "HenriChen", "author2"=> "Robbie Cheng"),
+			array("title"=> "Beautiful Teams: Inspiring and Cautionary Tales", "author1"=> "Andrew Stellman", "author2"=> "Jennifer Greene")
+		),
+		"lf"=> array( //lf: Literature and Fiction
+			array("title"=> "The Shack", "author1"=> "William P. Young", "author2"=> ""),
+			array("title"=> "Watchmen", "author1"=> "Alan Moore", "author2"=> "Dave Gibbons"),
+			array("title"=> "Long Lost", "author1"=> "Harlan Coben", "author2"=> "")
+		)
+	);
+
+	header('Content-Type: text/plain;charset=UTF-8');
+	echo json_encode($bookInfos[$_REQUEST['categoryId']]);
+?>
+}}}
+
+== Processing the request ==
+
+The processing of the request is straightforward: retrieve the category, look for the suggestion, and then send it back. In this example, we use JSON to transfer the data back(1).
+
+{{{
+echo json_encode($bookInfos[$_REQUEST['categoryId']]);
+}}}
+
+Once the response arrives at the client, the success function will be called to display the suggestion, as described in the previous section.
+
+----
+1. ↑ You can use any format you like as long as both the client and the server can interpret it correctly
+
+= Testing the application =
+
+Open a browser to access the following URL (where the port depends on your Web server's configuration).
+
+{{{
+http://localhost:8080/booksuggest/
+}}}

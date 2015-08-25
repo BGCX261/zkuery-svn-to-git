@@ -1,0 +1,17 @@
+How to Deploy ZKuery to Your Web Application without Server Codes
+------
+
+1. Copy css and js to your Web application
+2. Link css/zk.css, js/zk-all.js and js/lang.js. For example,
+
+<link rel="stylesheet" type="text/css" href="css/zk.css"/>
+<script type="text/javascript" src="js/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="js/lang.js" charset="UTF-8">
+</script>
+
+	2a. If you want to debug, you can include js/src/zk-all.js instead.
+	2b. If you want to use different languages, you can include js/lang_xx.js
+	2c. If you want to minimize the footprint of JavaScript codes, you
+		can include the widgets you requires, such as js/zk.js, js/wnd.js
+		and so on.

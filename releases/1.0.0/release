@@ -1,0 +1,65 @@
+#!/bin/bash
+# release
+#
+#	Purpose:
+#		
+#	Description:
+#		
+#	History:
+#		Mon Nov 14 14:29:09     2005, Created by tomyeh
+#
+#Copyright (C) 2005 Potix Corporation. All Rights Reserved.
+#
+stamp=$(date +%Y-%m-%d)
+version=1.0.0
+target=$1
+
+if [ "$target" == "official" ] ; then
+	nmver=$version
+else
+	nmver=$version-FL-$stamp
+fi
+
+mkdir -p /tmp/zkuery
+rm -rf /tmp/zkuery/*
+
+function output {
+	lang=$1
+	flnm=$2
+	echo Prepare ${flnm}
+	mkdir -p /tmp/zkuery/$flnm
+
+	cp -rp $lang /tmp/zkuery/$flnm
+	cp -rp lib test /tmp/zkuery/$flnm
+	cp doc/COPYING /tmp/zkuery/$flnm
+	grep -v '^copy' README.txt > /tmp/zkuery/$flnm/README.txt
+
+	(
+	cd /tmp/zkuery/$flnm
+	if [ "$lang" = "java" ] ; then
+		rm -rf zkuery/debug
+		rm -rf booksuggest/debug
+	elif [ "$lang" = "python" ] ; then
+		find -name *.pyc | xargs rm -rf
+		find -name *.pyo | xargs rm -rf
+	fi
+	find -name .svn | xargs rm -rf
+
+	cd ..
+	echo Output ${flnm}.zip
+	zip -qr9 $flnm.zip $flnm
+	echo Output ${flnm}.tar.gz
+	tar zcf $flnm.tar.gz $flnm
+
+	rm -rf /tmp/zkuery/$flnm
+	)
+}
+
+#Java
+output java zkuery-java-$nmver
+
+#PHP
+output php zkuery-php-$nmver
+
+#Python
+output python zkuery-python-$nmver

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Specification-Title: ZKuery Demo - Book Suggest
+Specification-Version: 1.0.0
+Specification-Vendor: Potix Corporation
+Implementation-Title: org.zkuery.sample.booksuggest
+Implementation-URL: http://www.zkuery.org/sample/booksuggest
+Implementation-Version: 1.0.0
+Implementation-Vendor: Potix Corporation

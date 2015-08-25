@@ -1,0 +1,13 @@
+How to Test ZKuery without Server Codes
+
+-----
+For quick test:
+1) Use browser to open test/hello.html
+
+---
+For application developers who don't want use ZKuery server codes:
+1) Copy files from lib/css, lib/js, test to your Web server
+
+2) Modify test/hello.html to make sure CSS and JS points the correct location
+
+3) Then browse to test/hello.html, such as http://localhost/test/hello.html

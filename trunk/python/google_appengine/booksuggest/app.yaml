@@ -1,0 +1,12 @@
+application: booksuggest
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /(.*\.(html|png|jpg|gif|css|js))
+  static_files: WebContent/\1
+  upload: WebContent/(.*\.(html|png|jpg|gif|css|js))
+
+- url: /suggest
+  script: booksuggest.py

@@ -1,0 +1,22 @@
+#!/bin/bash
+# export
+#
+#	Purpose:
+#		
+#	Description:
+#		
+#	History:
+#		Mon Apr 13 14:23:08     2009, Created by tomyeh
+#
+#Copyright (C) 2009 Potix Corporation. All Rights Reserved.
+#
+echo Export zkuery.jar
+if [ ! -d debug ] ; then
+	echo "Wrong directory: debug not found"
+	exit 1
+fi
+cd debug
+find -name .svn | xargs rm -rf
+cd ..
+jar cfm zkuery.jar src/META-INF/MANIFEST.MF -C debug .
+mv -f zkuery.jar ../booksuggest/WebContent/WEB-INF/lib

@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Hello, World</title>
+<link rel="stylesheet" type="text/css" href="../lib/css/zk.css"/>
+<script type="text/javascript" src="../lib/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/lang.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+	</div>
+	<script>
+	jq('#main').replaceWith(new zul.wgt.Div({
+		children: [
+		new zul.wgt.Label({value: "What's your name? "}),
+		new zul.inp.Textbox({
+			onOK: function () {
+				this.parent.appendChild(
+					new zul.wgt.Separator());
+				this.parent.appendChild(
+					new zul.wgt.Label({value: 'Hello, '+this.getValue()}));
+			}
+		})]
+	}));
+	</script>
+</body>
+</html>

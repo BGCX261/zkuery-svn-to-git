@@ -1,0 +1,162 @@
+#labels iZUML
+<wiki:toc max_depth="2" />
+
+= Introduction =
+
+iZUML is a stripped-down version of [http://docs.zkoss.org/wiki/ZUML ZUML]. iZUML is embedded in a Web page and interpreted at the client. 
+
+= How to embed iZUML into a HTML page =
+
+It is typically placed inside a DIV tag, though you can choose other kind of tags. Furthermore, it is placed inside a comment (&lt!-- and -->) such that the page can be interpreted correctly by the browser, as show below. Since it has zero dimension, it is optional to specify display:none in the enclosing tag.
+
+{{{
+<div id="main">
+	<!--
+	<window>
+		What's your name? <textbox onOK="sayHello(this)"/>
+	</window>
+	<separator bar="true"/>
+	-->
+</div>
+}}}
+
+Of course, you construct it dynamically such as follows.
+
+{{{
+var zuml = '<window title="' + title +'">What\'s your name? <textbox/></window>';
+}}}
+
+= How to create widgets from iZUML =
+
+If the iZUML content is embedded in a HTML tag, you can use [http://www.zkoss.org/javadoc/latest/jsdoc/zk/zuml/Parser.html Parser]'s createAt method to create widgets. If it is a string, use the create method.
+
+{{{
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>ZKuery</title>
+<link rel="stylesheet" type="text/css" href="../lib/css/zk.css"/>
+<script type="text/javascript" src="../lib/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/lang.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/src/zuml.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+		<!--
+		<window title="ZKuery Test" border="normal">
+			${this.getTitle()}
+			<zk forEach="${[1, 2, 3]}">
+				${each}: <textbox value="${each}"/>
+			</zk>
+			<button label="Click">
+				<attribute name="onClick">
+			this.parent.appendChild(
+				new zul.wgt.Label({value: 'Click\n', multiline: true}));
+				</attribute>
+			</button>
+			<separator bar="true"/>
+		</window>
+		-->
+	</div>
+	<script>
+		zk.zuml.Parser.createAt('#main');
+	</script>
+</body>
+</html>
+}}}
+
+= EL Expression =
+
+The EL expression is actually a JavaScript snippet. It could be anything.
+
+Here is a list of built-in variables (aka., implicit objects) that you can access in the EL expressions. 
+
+<table width="100%" border="1">
+<tr>
+<th>*Name*</th><th>*Description*</th>
+</tr>
+<tr>
+<td>`this`</td>
+<td>
+It references the widget has been created.
+
+If the EL expression is part of the `if` and `unless` attribute, `this` is the parent widget. 
+If the EL expression is part of other attribute, `this` is the widget being created.
+
+{{{
+<window title="some">${this.getTitle()}...
+}}}
+</td>
+</tr>
+<tr>
+<td>`_`</td>
+<td>
+The context passed to the argument named <code>args</code> (the third argument) of [http://www.zkoss.org/javadoc/latest/jsdoc/zk/zuml/Parser.html Parser]'s `create` and `createAt` method.
+
+{{{
+${_.info.name}
+}}}
+||
+</td>
+</tr>
+</table>
+
+= Built-in Attributes =
+
+== forEach ==
+
+{{{
+<window title="Test" border="normal">
+ 	<label forEach="${[this.getTitle(), this.getBorder()}"/>
+</window>
+}}}
+
+ * Notice
+  * Unlike widget attributes, this references to the parent widget, which is window in the above case. 
+
+== if ==
+
+{{{
+<button label="Edit" if="${_.login}/>
+}}}
+
+== unless ==
+
+{{{
+<button label="View" unless="${_.inEditMode}"/>
+}}}
+
+= Built-in Element =
+== attribute ==
+{{{
+<button label="Click">
+	<attribute name="onClick">
+	this.parent.setTitle("Click");
+	</attribute>
+</button>
+}}}
+is equivalent to
+{{{
+<button label="Click onClick="this.parent.setTitle('click')"/>
+}}}
+
+== zk ==
+
+The zk element doesn't represent a widget.
+{{{
+<zk forEach="${[1, 2, 3]}">
+	${each} <textbox value="${each}"/>
+</zk>
+}}}
+
+= Notes =
+== script ==
+
+When `<script>` is specified in iZUML, it actually refers to the script widget ([http://www.zkoss.org/javadoc/latest/jsdoc/zul/utl/Script.html zul.utl.Script]) (rather than HTML SCRIPT tag).
+
+== style ==
+
+When `<style>` is specified in iZUML, it actually refers to the style widget ([http://www.zkoss.org/javadoc/latest/jsdoc/zul/utl/Style.html zul.utl.Style]) (rather than HTML STYLE tag). 

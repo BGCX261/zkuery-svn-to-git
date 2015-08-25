@@ -1,0 +1,265 @@
+<wiki:toc max_depth="2" />
+
+= Introduction =
+
+Let's illustrate the communication between the client and the server with a small application called Book Suggest.
+
+Book Suggest shows up a combobox to let user select an interested category.
+
+http://docs.zkoss.org/images/1/1b/Booksuggest-1.jpg
+
+After user selects a category, it displays a list of suggested books in a grid. 
+
+http://docs.zkoss.org//images/6/6c/Booksuggest-2.jpg
+
+= Creating an Eclipse project =
+
+To create a ZKuery project, you have to prepare the following:
+
+ * ZK JavaScript files. Let us copy them to the js directory of the project
+ * ZK CSS and image files. Let us copy them to the css directory of the project
+ * (Optional) ZKuery library named `zkuery.jar`. It is a tiny file with [http://www.json.org JSON] utilities. It is required if you want to use JSON to communicate. You can choose other implementation instead, too. Let us copy it to the `WEB-INF/lib` directory of the project. 
+
+To focus more on ZKuery itself, here we simply open an existent project called `booksuggest` that can be found in the download. You might refer to Creating a ZKuery project with Eclipse. 
+
+= Creating a HTML page =
+
+In this example, we use [iZUML] to implement the HTML page. If you prefer other approach, refer to the example with JavaScript.
+
+Let us create a file named `index.html` with the following content, and place it under the `WebContent` directory. 
+
+{{{
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Book Suggest</title>
+<link rel="stylesheet" type="text/css" href="/booksuggest/css/zk.css"/>
+<script type="text/javascript" src="/booksuggest/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/booksuggest/js/src/zuml.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="/booksuggest/js/lang.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+		<!--
+		<window id="main" title="Book Suggest" border="normal">
+			What is your favorite?
+			<combobox id="favorite" readonly="true" cols="30"
+			onSelect="loadSuggest(event.data.items[0])">
+				<comboitem id="bm" label="Biographies and Memoirs"/>
+				<comboitem id="ci" label="Computer and Internet"/>
+				<comboitem id="lf" label="Literature and Fiction"/>
+			</combobox>
+			<separator bar="true"/>
+		</window>
+		-->
+	</div>
+	<script>
+		var main = zk.zuml.Parser.createAt('#main');
+
+		//load the suggestion
+		function loadSuggest(item) {
+			jq.ajax({
+				type: 'POST',
+				url: '/booksuggest/suggest',
+				dataType: 'json',
+				data: 'categoryId=' + item.id,
+				success: function (bookInfo) {
+					var suggestInfo = zk.Widget.$('suggestInfo');
+					if (suggestInfo) suggestInfo.detach();
+					main.appendChild(zk.zuml.Parser.createAt('#suggestInfo',
+						{replaceHTML:false}, {infos: bookInfo}));
+				}
+			});
+		}
+	</script>
+	<div id="suggestInfo" style="display:none">
+		<!--
+		<grid id="suggestInfo">
+			<columns>
+				<column label="Title"/>
+				<column label="Author"/>
+				<column label="Author"/>
+			</columns>
+			<rows>
+				<row forEach="${_.infos}">
+					<label value="${each.title}"/>
+					<label value="${each.author1}"/>
+					<label value="${each.author2}"/>
+				</row>
+			</rows>
+		</grid> 
+		 -->
+	</div>
+</body>
+</html>
+}}}
+
+= Sending the request to the server =
+
+Then, we have to fire the request to the server when user selects a category. To listen the event, just specify `onSelect` as follows.
+
+{{{
+<combobox onSelect="loadSuggest(event.data.items[0])">
+}}}
+
+where `loadSuggest` is the function we are going to implement later to load the book suggestion from the server.
+
+As shown above, when an event is received, we can retrieve the event by use of a variable named event, which is an instance of [http://www.zkoss.org/javadoc/latest/jsdoc/zk/Event.html zk.Event]. Moreover, we can retrieve the detailed information via the data property. Because it is `onSelect`, we can retrieve the selected item via `data.items[0]` (there is only one selected item because it is a combobox)(see also [http://docs.zkoss.org/wiki/CDG5:_Event_Data Event Data]).
+
+Then, we implement `loadSuggest` by use of the `ajax` function of jQuery to send the request to the server as follows.
+
+{{{
+function loadSuggest(item) {
+	jq.ajax({
+		type: 'POST',
+		url: '/booksuggest/suggest',
+		dataType: 'json',
+		data: 'categoryId=' + item.id,
+		success: function (bookInfo) {
+			... //the function to handle the response sent back from the server
+		}
+	});
+}
+}}}
+
+where `jq` references to the [http://www.zkoss.org/javadoc/latest/jsdoc/_global_/jq.html jQuery] object. The URL specified in `url` depends on how we map the servlet to handle the request. Here, we map it to `/suggest` (and we assume the context path is `/booksuggest`).
+
+
+= Processing the response sent from the server =
+
+When using jQuery's ajax(), we can specify a function to process the content responsed from the server. It can be done by specifying a function with the success attribute as show in the above example. In this example, we will show a list of suggested books based on the category selected by user, so we implement it as follows.
+
+{{{
+success: function (bookInfo) {
+	var suggestInfo = zk.Widget.$('suggestInfo');
+	if (suggestInfo) suggestInfo.detach();
+	main.appendChild(zk.zuml.Parser.createAt('#suggestInfo',
+		{replaceHTML:false}, {infos: bookInfo}));
+}
+}}}
+
+where we use the `createAt` method to load a template stored in a hidden DIV (whose id is `suggestInfo`). Because we want to keep the template for later use, we have to specify `replaceHTML` as false. Furthermore, we append the created widget to the widget named `main`.
+
+Refer to [http://www.zkoss.org/javadoc/latest/jsdoc/zk/zuml/Parser.html zk.zuml.Parser's createAt] for more information.
+
+= Creating a Java Servlet =
+
+To handle the request sent from the client, we have to implement a servlet. Let us create a Java class named `org.zkuery.sample.booksuggest.SuggestServlet` with the following content. 
+
+{{{
+package org.zkuery.sample.booksuggest;
+
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.zkuery.json.JSONArray;
+
+/**
+ * Handles the AU request for suggestion.
+ */
+public class SuggestServlet extends HttpServlet {
+	private static final long serialVersionUID = -6206497555943352854L;
+	private Map<String, List<Map<String,String>>> _bookInfos;
+
+	public void doGet(HttpServletRequest hreq, HttpServletResponse hres)
+	throws ServletException, IOException {
+		doPost(hreq, hres);
+	}
+	public void doPost(HttpServletRequest request, HttpServletResponse response)
+	throws ServletException, IOException {
+		final String categoryId = request.getParameter("categoryId");
+		if (categoryId != null) {
+			List bookInfo = (List)_bookInfos.get(categoryId);
+			response.getWriter().append(JSONArray.toJSONString(bookInfo));
+		}
+	}
+
+	public void init() {
+		_bookInfos = new HashMap<String, List<Map<String,String>>>();
+
+		String[] cats = {"bm", "ci", "lf"};
+		String[][][] all = {
+			{ //bm: Biographies and Memoirs
+				{"The Last Lecture", "Randy Pausch", "Jeffrey Zaslow"},
+				{"Always Looking Up: The Adventures of an Incurable Optimist ","Michael F. Fox", ""}
+			},
+			{ //ci: Computer and Internet
+				{"ZK: Ajax without the Javascript Framework", "HenriChen", "Robbie Cheng"},
+				{"Beautiful Teams: Inspiring and Cautionary Tales", "Andrew Stellman", "Jennifer Greene"}
+			},
+			{ //lf: Literature and Fiction
+				{"The Shack", "William P. Young", ""},
+				{"Watchmen", "Alan Moore", "Dave Gibbons"},
+				{"Long Lost", "Harlan Coben", ""}
+			}
+		};
+		for (int j = 0; j < cats.length; ++j) {
+			String[][] infos = all[j];
+			List<Map<String,String>> list = new LinkedList<Map<String,String>>();
+			_bookInfos.put(cats[j], list);
+			for (String[] info: infos)
+				list.add(createBookInfo(info[0], info[1], info[2]));
+		}
+	}
+	private Map<String,String> createBookInfo(String title, String author1, String author2) {
+		Map<String,String> info = new LinkedHashMap<String,String>();
+		info.put("title", title);
+		info.put("author1", author1);
+		info.put("author2", author2);
+		return info;
+	}
+}
+}}}
+
+== Processing the request ==
+
+The processing of the request is straightforward: retrieve the category, look for the suggestion, and then send it back. In this example, we use JSON to transfer the data back(1).
+
+{{{
+final String categoryId = request.getParameter("categoryId");
+if (categoryId != null) {
+	List bookInfo = (List)_bookInfos.get(categoryId);
+	response.getWriter().append(JSONArray.toJSONString(bookInfo));
+}
+}}}
+
+Once the response arrives at the client, the success function will be called to display the suggestion, as described in the previous section.
+
+----
+1. ↑ You can use any format you like as long as both the client and the server can interpret it correctly
+
+= Modifying web.xml =
+
+To map SugestServlet to `/suggest`, that the client expects, we have to modify `WEB-INF/web.xml` by adding the following content.
+
+{{{
+<servlet>
+	<description>Book Suggest</description>
+	<servlet-name>suggest</servlet-name>
+	<servlet-class>org.zkuery.sample.booksuggest.SuggestServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+	<servlet-name>suggest</servlet-name>
+	<url-pattern>/suggest/*</url-pattern>
+</servlet-mapping>
+}}}
+
+= Testing the application =
+
+You can test Book Suggest with Eclipse's Run As. Or, open a browser to access the following URL (where the port depends on your Web server's configuration).
+
+{{{
+http://localhost:8080/booksuggest/
+}}}

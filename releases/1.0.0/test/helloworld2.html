@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Hello, World</title>
+<link rel="stylesheet" type="text/css" href="../lib/css/zk.css"/>
+<script type="text/javascript" src="../lib/js/src/zk-all.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/zuml.js" charset="UTF-8">
+</script>
+<script type="text/javascript" src="../lib/js/lang.js" charset="UTF-8">
+</script>
+</head>
+<body>
+	<div id="main">
+		<!--
+		<div>
+			What's your name? <textbox onOK="sayHello(this)"/>
+		</div>
+		-->
+	</div>
+	<script>
+		zk.zuml.Parser.createAt('#main');
+
+		function sayHello(textbox) {
+			zk.zuml.Parser.create(textbox.parent,
+				'<div>Hello, ${_.who}</div>', {who: textbox.getValue()});
+		}
+	</script>
+</body>
+</html>

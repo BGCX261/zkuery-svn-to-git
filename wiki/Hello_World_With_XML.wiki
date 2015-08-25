@@ -1,0 +1,66 @@
+<wiki:toc max_depth="2" />
+
+= Introduction =
+
+Let's begin by implementing a tiny application that shows a greeting message to visitors.
+
+Here we use [iZUML] to implement this application. There are other alternatives:
+
+    * [Hello_World_With_JavaScript  With JavaScript].
+
+= Creating a HTML page =
+
+First, create a file named helloworld2.html, and give it the following contents. We assume all required ZK CSS and JavaScript files reside in the subdirectory named css and js, respectively. 
+
+{{{
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Hello, World!</title>
+<link rel="stylesheet" type="text/css" href="css/zk.css"/><!-- ZK CSS -->
+<script type="text/javascript" src="js/zk-all.js" charset="UTF-8">
+</script><!-- ZK Widget library -->
+<script type="text/javascript" src="js/lang.js" charset="UTF-8">
+</script><!-- Locale-dependent messages -->
+</head>
+<body>
+	<div id="main">
+		<!--
+		<div>
+			What's your name? <textbox onOK="sayHello(this)"/>
+		</div>
+		-->
+	</div>
+	<script>
+		zk.zuml.Parser.createAt('#main');
+
+		function sayHello(textbox) {
+			zk.zuml.Parser.create(textbox.parent,
+				'<div>Hello, ${_.who}</div>', {who: textbox.getValue()});
+		}
+	</script>
+</body>
+</html>
+}}}
+
+From top to bottom, this HTML page does the following.
+
+ * Loads the ZK CSS file, zk.css.
+ * Loads the ZK JavaScript files, zk-all.js and lang.js.
+  * zk-all.js contains all available widgets. To minimize the traffic, you can load only the required packages by specifying them one-by-one.
+  * lang.js contains messages in English. You can choose any of the available translations, or provide your own.
+ * Provides an anchor to replace with ZK widgets that will be created later. The anchor is usually a DIV tag, though it could be anything.
+ * Provides what widgets to create in [iZUML] and places it inside the anchor. To make it valid XHTML, it is suggested to escape it &lt!-- and --&gt;.
+  * Then, create the widgets and replace with the anchor with the `createAt` method of `zk.zuml.Parser`.
+  * The <tt>sayHello</tt> function illustrates another way to create widgets by use of iZUML. As shown, you can pass a map of values to replace EL expressions in iZUML.
+   * Notice that EL expressions in iZUML is actually a snippet of JavaScript codes, where `_` references to the map of values being passed.
+
+= Testing the Application =
+
+ZKuery doesn't assume anything about the server, so you can test it by browsing to the HTML page directly. Assume the file reside in the directory named c:\zkuery\test. Then, you can test it by entering the following URL.
+
+{{{
+file:///C:/zkuery/test/helloworld2.html
+}}}
+
+Then, you can type in your name and press ENTER to see how it says Hello to you. 
